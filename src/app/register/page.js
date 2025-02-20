@@ -336,9 +336,16 @@ export default function Register() {
         {/* Register Form Section */}
         <div className="w-[30%] h-full flex items-center justify-center p-8 bg-gradient-to-b from-gray-50 to-white overflow-y-auto">
           <form onSubmit={handleSubmit} className="w-full max-w-md space-y-8">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
-              <p className="mt-2 text-gray-600">Join our community of artist managers</p>
+            <div className="text-center space-y-4">
+              {/* Add Logo - matching login page */}
+              <div className="flex justify-center">
+                <img 
+                  src="/logo.png" 
+                  alt="ArtistryX Logo" 
+                  className="h-12 w-auto"
+                />
+              </div>
+              <p className="mt-2 text-gray-600">Create your account to get started</p>
             </div>
 
             <div className="space-y-6">

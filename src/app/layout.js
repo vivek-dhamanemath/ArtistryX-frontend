@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={roboto.className}>
       <body>
-        <GoogleOAuthProvider clientId="979081682205-24a4jjvat3enner3bvnvf4rmua8cs0rs.apps.googleusercontent.com">
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
           <div className="min-h-screen">
             {children}
           </div>

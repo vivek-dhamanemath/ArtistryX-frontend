@@ -1,10 +1,10 @@
-const API_URL = "http://localhost:8081/api/auth";
+const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL;
 
 // ✅ User login
 export async function loginUser(credentials) {
   console.log("🔹 Sending login request:", credentials);
 
-  const response = await fetch(`${API_URL}/login`, {
+  const response = await fetch(`${AUTH_API_URL}/login`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -31,7 +31,7 @@ export async function loginUser(credentials) {
 // ✅ User registration
 export async function registerUser(user) {
   try {
-    const response = await fetch(`${API_URL}/register`, {
+    const response = await fetch(`${AUTH_API_URL}/register`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -94,7 +94,7 @@ export async function requestResetCode(email) {
 
 // ✅ Verify reset code
 export async function verifyResetCode(email, token) {
-  const response = await fetch(`${API_URL}/verify-reset-code`, {
+  const response = await fetch(`${AUTH_API_URL}/verify-reset-code`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify({ email, token }),
@@ -111,7 +111,7 @@ export async function verifyResetCode(email, token) {
 
 // ✅ Update password
 export async function updatePassword(email, newPassword) {
-  const response = await fetch(`${API_URL}/reset-password`, { // ✅ Correct endpoint
+  const response = await fetch(`${AUTH_API_URL}/reset-password`, { // ✅ Correct endpoint
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, newPassword }),
@@ -129,7 +129,7 @@ export async function updatePassword(email, newPassword) {
 // ✅ Live Username Availability Check
 export const checkUsernameAvailability = async (username) => {
   try {
-    const response = await fetch(`${API_URL}/check-username?username=${username}`, {
+    const response = await fetch(`${AUTH_API_URL}/check-username?username=${username}`, {
       method: 'GET',
       credentials: "include",
       headers: getAuthHeaders(),
@@ -158,7 +158,7 @@ export const checkUsernameAvailability = async (username) => {
 // ✅ Live Email Availability Check
 export const checkEmailAvailability = async (email) => {
   try {
-    const response = await fetch(`${API_URL}/check-email?email=${encodeURIComponent(email)}`, {
+    const response = await fetch(`${AUTH_API_URL}/check-email?email=${encodeURIComponent(email)}`, {
       credentials: "include",
       headers: getAuthHeaders(),
     });
@@ -189,7 +189,7 @@ export const googleLogin = async (credentials) => {
   try {
     console.log('Sending Google credentials to backend:', credentials);
 
-    const response = await fetch(`${API_URL}/google-login`, {
+    const response = await fetch(`${AUTH_API_URL}/google-login`, {
       method: 'POST',
       credentials: "include",
       headers: {

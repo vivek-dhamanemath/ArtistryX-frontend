@@ -101,7 +101,7 @@ export default function LoginForm() {
     }
 
     try {
-      const res = await fetch("http://localhost:8081/api/auth/google-login", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/google-login`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -152,7 +152,7 @@ export default function LoginForm() {
   const GoogleLoginButton = () => {
     return (
       <GoogleLogin
-        clientId="979081682205-24a4jjvat3enner3bvnvf4rmua8cs0rs.apps.googleusercontent.com"
+        clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
         onSuccess={handleGoogleLogin}
         onError={(error) => {
           console.error("Google Login Failed:", error);
