@@ -1,4 +1,8 @@
-const API_URL = "http://localhost:8081/api/artists";
+import axios from 'axios';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://artistryx-backend.onrender.com/api';
+
+const API_URL = "https://artistryx-backend.onrender.com/api/artists";
 
 // ✅ Function to get Authorization headers (JWT)
 const getAuthHeaders = () => {
@@ -15,28 +19,28 @@ const getAuthHeaders = () => {
 
 
 // ✅ Add a new artist
-export async function addArtist(artist) {
-  let response = await fetch("http://localhost:8081/api/artists", {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(artist),
-  });
+export const addArtist = async (artistData) => {
+  try {
+    // Get the token from localStorage
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
 
-  if (response.status === 401) {
-    console.error("🔴 Token expired or invalid. Redirecting to login.");
-    window.location.href = "/login"; // Redirect to login page
-    return;
+    const response = await axios.post(`${API_BASE_URL}/artists`, artistData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error adding artist:', error);
+    throw error.response?.data || error.message;
   }
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to add artist");
-  }
-
-  return response.json();
-}
-
-
+};
 
 // ✅ Update an artist
 export async function updateArtist(id, updatedArtist) {
