@@ -41,7 +41,7 @@ export default function AddArtist() {
     { name: "Czech 🇨🇿", value: "Czech" },
     { name: "Danish 🇩🇰", value: "Danish" },
     { name: "Dutch 🇳🇱", value: "Dutch" },
-    { name: "Egyptian 🇪🇬", value: "Egyptian" },
+    { name: "Egyptian 🇪�g", value: "Egyptian" },
     { name: "Filipino 🇵🇭", value: "Filipino" },
     { name: "Finnish 🇫🇮", value: "Finnish" },
     { name: "French 🇫🇷", value: "French" },
@@ -81,10 +81,9 @@ export default function AddArtist() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Create payload with correct field name
       const artistData = {
-        artistName: artist.artistName, // Ensure we're using the correct field name
-        age: artist.age,
+        artistName: artist.artistName,
+        age: parseInt(artist.age), // Ensure age is sent as a number
         gender: artist.gender,
         nationality: artist.nationality,
         industry: artist.industry
@@ -92,19 +91,13 @@ export default function AddArtist() {
 
       const response = await addArtist(artistData);
       setMessage({ text: `✅ ${response.message || "Artist added successfully!"}`, type: "success" });
-
-      // Reset form with correct field name
-      setArtist({
-        artistName: "",
-        age: "",
-        gender: "",
-        nationality: "",
-        industry: ""
-      });
-
-      setTimeout(() => setMessage(null), 3000);
+      clearForm();
     } catch (error) {
-      setMessage({ text: "❌ Failed to add artist. Please try again.", type: "error" });
+      console.error('Error in handleSubmit:', error);
+      setMessage({ 
+        text: `❌ ${error.message || "Failed to add artist. Please try again."}`, 
+        type: "error" 
+      });
     }
   };
 
