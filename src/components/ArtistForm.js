@@ -66,7 +66,7 @@ export default function AddArtist() {
     { name: "Romanian 🇷🇴", value: "Romanian" },
     { name: "Russian 🇷🇺", value: "Russian" },
     { name: "Saudi Arabian 🇸🇦", value: "Saudi Arabian" },
-    { name: "Singaporean 🇸🇬", value: "Singaporean" },
+    { name: "Singaporean 🇸�", value: "Singaporean" },
     { name: "South African 🇿🇦", value: "South African" },
     { name: "South Korean 🇰🇷", value: "South Korean" },
     { name: "Spanish 🇪🇸", value: "Spanish" },
@@ -81,21 +81,40 @@ export default function AddArtist() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Validate the data before sending
+      if (!artist.artistName || !artist.age || !artist.gender || !artist.nationality || !artist.industry) {
+        setMessage({ 
+          text: "❌ Please fill in all required fields", 
+          type: "error" 
+        });
+        return;
+      }
+
       const artistData = {
-        artistName: artist.artistName,
-        age: parseInt(artist.age), // Ensure age is sent as a number
+        artistName: artist.artistName.trim(),
+        age: parseInt(artist.age),
         gender: artist.gender,
         nationality: artist.nationality,
         industry: artist.industry
       };
 
+      console.log('Submitting artist data:', artistData); // Debug log
+
       const response = await addArtist(artistData);
-      setMessage({ text: `✅ ${response.message || "Artist added successfully!"}`, type: "success" });
-      clearForm();
+      
+      if (response.success || response.message) {
+        setMessage({ 
+          text: `✅ ${response.message || "Artist added successfully!"}`, 
+          type: "success" 
+        });
+        clearForm();
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       setMessage({ 
-        text: `❌ ${error.message || "Failed to add artist. Please try again."}`, 
+        text: `❌ ${error.message || "Failed to add artist. Please check your input and try again."}`, 
         type: "error" 
       });
     }

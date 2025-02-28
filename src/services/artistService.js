@@ -15,13 +15,29 @@ const getAuthHeaders = () => {
 // Add a new artist
 export const addArtist = async (artistData) => {
   try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
+
+    console.log('Sending artist data:', artistData); // Debug log
+    
     const response = await axios.post(API_URL, artistData, {
-      headers: getAuthHeaders(),
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
     });
+
+    console.log('Response:', response.data); // Debug log
     return response.data;
   } catch (error) {
-    console.error('Error adding artist:', error);
-    throw error.response?.data || error.message;
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    throw error.response?.data || { message: error.message };
   }
 };
 
