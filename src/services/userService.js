@@ -1,7 +1,8 @@
-const API_URL = "https://artistryx-backend.onrender.com/api/users";
+// filepath: /d:/ArtistryX project Deployed/Frontend-Nextjs/film-management-frontend/src/services/userService.js
+const API_AUTH_URL = process.env.NEXT_PUBLIC_AUTH_API_URL;
 
 export async function registerUser(user) {
-  const response = await fetch("https://artistryx-backend.onrender.com/api/auth/register", {
+  const response = await fetch(`${API_AUTH_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(user),
@@ -12,9 +13,8 @@ export async function registerUser(user) {
   }
 
   try {
-    return await response.json(); // ✅ Prevents parsing empty response
+    return await response.json();
   } catch (error) {
     return { message: "✅ Registration successful, but no response from server." };
   }
 }
-
