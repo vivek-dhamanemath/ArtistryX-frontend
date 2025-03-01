@@ -39,14 +39,12 @@ export async function registerUser(user) {
     });
 
     const data = await response.text();
-    
+
     if (!response.ok) {
-      // Try to parse error message
       try {
         const errorData = JSON.parse(data);
         throw new Error(errorData.message || "Registration failed");
       } catch {
-        // If can't parse JSON, use raw text
         throw new Error(data || "Registration failed");
       }
     }
@@ -62,30 +60,29 @@ export async function registerUser(user) {
   }
 }
 
-
 const getAuthHeaders = () => ({
   "Content-Type": "application/json",
-  ...(localStorage.getItem("token") && { 
-    Authorization: `Bearer ${localStorage.getItem("token")}` 
-  })
+  ...(localStorage.getItem("token") && {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  }),
 });
 
 // ✅ Send reset code to email
 export async function requestResetCode(email) {
-  console.log("🔹 Sending reset request for:", email); // Debugging
+  console.log("🔹 Sending reset request for:", email);
 
-  const response = await fetch("http://localhost:8081/api/auth/forgot-password", {
+  const response = await fetch(`${AUTH_API_URL}/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
 
-  console.log("🔹 Response Status:", response.status); // Log status
-  console.log("🔹 Response Headers:", response.headers); // Log headers
+  console.log("🔹 Response Status:", response.status);
+  console.log("🔹 Response Headers:", response.headers);
 
   if (!response.ok) {
     const errorMessage = await response.text();
-    console.error("❌ Backend Error:", errorMessage || "Unknown error"); // Debugging
+    console.error("❌ Backend Error:", errorMessage || "Unknown error");
     throw new Error(errorMessage || "Failed to send reset code.");
   }
 
@@ -102,7 +99,7 @@ export async function verifyResetCode(email, token) {
 
   if (!response.ok) {
     const errorMessage = await response.text();
-    console.error("❌ Backend Error:", errorMessage); 
+    console.error("❌ Backend Error:", errorMessage);
     throw new Error(errorMessage || "Failed to verify reset code.");
   }
 
@@ -111,7 +108,7 @@ export async function verifyResetCode(email, token) {
 
 // ✅ Update password
 export async function updatePassword(email, newPassword) {
-  const response = await fetch(`${AUTH_API_URL}/reset-password`, { // ✅ Correct endpoint
+  const response = await fetch(`${AUTH_API_URL}/reset-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, newPassword }),
@@ -129,21 +126,19 @@ export async function updatePassword(email, newPassword) {
 // ✅ Live Username Availability Check
 export const checkUsernameAvailability = async (username) => {
   try {
-    const response = await fetch(`${AUTH_API_URL}/auth/check-username/${username}`, {
+    const response = await fetch(`${AUTH_API_URL}/check-username?username=${encodeURIComponent(username)}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.message || 'Error checking username');
     }
 
     return {
-      available: data.available,
+      available: !data.exists,
       message: data.message || (data.available ? '✅ Username is available' : '❌ Username is taken')
     };
   } catch (error) {
@@ -159,12 +154,12 @@ export const checkEmailAvailability = async (email) => {
       credentials: "include",
       headers: getAuthHeaders(),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.text();
       return {
         available: false,
-        message: "Email already registered.", // Cleaned up message
+        message: "Email already registered.",
       };
     }
 
@@ -182,6 +177,7 @@ export const checkEmailAvailability = async (email) => {
   }
 };
 
+// ✅ Google OAuth Login
 export const googleLogin = async (credentials) => {
   try {
     console.log('Sending Google credentials to backend:', credentials);
@@ -194,7 +190,7 @@ export const googleLogin = async (credentials) => {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        credential: credentials.credential // ✅ Send credential properly
+        credential: credentials.credential
       })
     });
 
@@ -211,5 +207,3 @@ export const googleLogin = async (credentials) => {
     throw error;
   }
 };
-
-
