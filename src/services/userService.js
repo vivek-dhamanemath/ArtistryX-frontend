@@ -1,7 +1,7 @@
-const API_URL = "http://localhost:8081/api/users";
+const API_URL = "https://artistryx-backend.onrender.com/api/users";
 
 export async function registerUser(user) {
-  const response = await fetch("http://localhost:8081/api/users/register", {
+  const response = await fetch("https://artistryx-backend.onrender.com/api/users/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(user),
