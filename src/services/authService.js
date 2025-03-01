@@ -129,29 +129,26 @@ export async function updatePassword(email, newPassword) {
 // ✅ Live Username Availability Check
 export const checkUsernameAvailability = async (username) => {
   try {
-    const response = await fetch(`${AUTH_API_URL}/check-username?username=${username}`, {
+    const response = await fetch(`${AUTH_API_URL}/auth/check-username/${username}`, {
       method: 'GET',
-      credentials: "include",
-      headers: getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
+    const data = await response.json();
+    
     if (!response.ok) {
-      return {
-        available: false,
-        message: 'Username already taken'
-      };
+      throw new Error(data.message || 'Error checking username');
     }
 
     return {
-      available: true,
-      message: '✅ Username is available'
+      available: data.available,
+      message: data.message || (data.available ? '✅ Username is available' : '❌ Username is taken')
     };
   } catch (error) {
     console.error('Username check error:', error);
-    return {
-      available: false,
-      message: '⚠️ Error checking username availability'
-    };
+    throw new Error('Unable to check username availability');
   }
 };
 
