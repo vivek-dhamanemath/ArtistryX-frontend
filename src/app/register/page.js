@@ -50,25 +50,25 @@ export default function Register() {
       });
       return;
     }
-  
-    setUsernameStatus(prev => ({ ...prev, checking: true }));
+
+    setUsernameStatus({ checking: true, available: false, message: "Checking availability..." });
     
     try {
-      const result = await checkUsernameAvailability(username);
+      const response = await checkUsernameAvailability(username);
       setUsernameStatus({
         checking: false,
-        available: result.available,
-        message: result.message
+        available: response.available,
+        message: response.available ? "✅ Username is available" : "❌ Username is already taken"
       });
     } catch (error) {
       setUsernameStatus({
         checking: false,
         available: false,
-        message: "⚠️ Error checking username"
+        message: "⚠️ Error checking username availability"
       });
     }
-  }, 500);
-  
+  }, 300); // Reduced debounce time to 300ms for better responsiveness
+
   // Updated email check function
   const debouncedCheckEmail = debounce(async (email) => {
     if (!email || !validateEmail(email)) {
@@ -153,7 +153,7 @@ export default function Register() {
         setUsernameStatus({
           checking: false,
           available: false,
-          message: "Username must be 3-30 characters long and can only contain letters, numbers, dots (.) and underscores (_)"
+          message: getValidationIcon('warning') + " " + validation.message
         });
       } else if (value.trim()) {
         debouncedCheckUsername(value.trim());
