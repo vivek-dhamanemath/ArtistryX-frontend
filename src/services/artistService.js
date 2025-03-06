@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://artistryx-backend.onrender.com/api';
-const API_URL = `${API_BASE_URL}/artists`;
+const API_URL = 'https://artistryx-backend.onrender.com/api/artists';
 
 // Get Authorization headers
 const getAuthHeaders = () => {

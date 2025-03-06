@@ -1,5 +1,4 @@
-// filepath: /d:/ArtistryX project Deployed/Frontend-Nextjs/film-management-frontend/src/services/userService.js
-const API_AUTH_URL = process.env.NEXT_PUBLIC_AUTH_API_URL;
+const API_AUTH_URL = "https://artistryx-backend.onrender.com/api/auth";
 
 export async function registerUser(user) {
   const response = await fetch(`${API_AUTH_URL}/register`, {
@@ -9,7 +8,8 @@ export async function registerUser(user) {
   });
 
   if (!response.ok) {
-    throw new Error("❌ Server error. Please try again.");
+    const errorData = await response.json();
+    throw new Error(errorData.message || "❌ Server error. Please try again.");
   }
 
   try {
@@ -17,4 +17,14 @@ export async function registerUser(user) {
   } catch (error) {
     return { message: "✅ Registration successful, but no response from server." };
   }
+}
+
+export async function checkUsernameAvailability(username) {
+  const response = await fetch(`${API_AUTH_URL}/check-username/${username}`);
+  return await response.json();
+}
+
+export async function checkEmailAvailability(email) {
+  const response = await fetch(`${API_AUTH_URL}/check-email/${email}`);
+  return await response.json();
 }

@@ -1,4 +1,4 @@
-const AUTH_API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL;
+const AUTH_API_URL = "https://artistryx-backend.onrender.com/api/auth";
 
 // ✅ User login
 export async function loginUser(credentials) {
