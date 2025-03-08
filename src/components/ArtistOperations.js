@@ -1,78 +1,31 @@
-import { useState, useEffect } from "react";
-import { addArtist, fetchAllArtists, deleteArtist, updateArtist } from "@/services/artistService";
+import { useState } from "react";
 
 export default function ArtistOperations() {
   const [artists, setArtists] = useState([]);
-  const [artist, setArtist] = useState({
-    name: "",
-    industry: "",
-    email: "",
-    bio: ""
-  });
+  const [artist, setArtist] = useState({ name: "", age: "", gender: "", industry: "", nationality: "" });
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  // Load artists on component mount
-  useEffect(() => {
-    loadArtists();
-  }, []);
-
-  const loadArtists = async () => {
-    try {
-      const data = await fetchAllArtists();
-      setArtists(data);
-    } catch (error) {
-      setError("Failed to load artists");
-    }
-  };
 
   const handleChange = (e) => {
     setArtist({ ...artist, [e.target.name]: e.target.value });
   };
 
-  const handleAddArtist = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setMessage("");
-
-    try {
-      if (!artist.name || !artist.industry || !artist.email) {
-        throw new Error("Name, Industry, and Email are required");
-      }
-
-      const response = await addArtist(artist);
-      setMessage("✅ Artist added successfully!");
-      setArtist({ name: "", industry: "", email: "", bio: "" }); // Clear form
-      await loadArtists(); // Reload the artists list
-    } catch (error) {
-      setError(error.message || "Failed to add artist");
-      console.error("Add artist error:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleAddArtist = () => {
+    setArtists([...artists, artist]);
+    setArtist({ artistName: "", age: "", gender: "", nationality: "", industry: "" });
+    setMessage("✅ Artist added successfully!");
   };
 
-  const handleUpdateArtist = async (id) => {
-    try {
-      await updateArtist(id, artist);
-      setMessage("✅ Artist updated successfully!");
-      setArtist({ name: "", industry: "", email: "", bio: "" });
-      await loadArtists();
-    } catch (error) {
-      setError("Failed to update artist");
-    }
+  const handleUpdateArtist = (index) => {
+    const updatedArtists = artists.map((a, i) => (i === index ? artist : a));
+    setArtists(updatedArtists);
+    setArtist({ artistName: "", age: "", gender: "", nationality: "", industry: "" });
+    setMessage("✅ Artist updated successfully!");
   };
 
-  const handleRemoveArtist = async (id) => {
-    try {
-      await deleteArtist(id);
-      setMessage("✅ Artist removed successfully!");
-      await loadArtists();
-    } catch (error) {
-      setError("Failed to remove artist");
-    }
+  const handleRemoveArtist = (index) => {
+    const updatedArtists = artists.filter((_, i) => i !== index);
+    setArtists(updatedArtists);
+    setMessage("✅ Artist removed successfully!");
   };
 
   const handleExportData = () => {
@@ -87,104 +40,108 @@ export default function ArtistOperations() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-black p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-black">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
-        <h1 className="text-2xl font-bold mb-6 text-center">🎨 Artist Operations</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">🎨 Artist Operations</h1>
 
-        <form onSubmit={handleAddArtist} className="space-y-4 mb-6">
+        <div className="mb-4">
           <input
             type="text"
             name="name"
-            placeholder="Artist Name *"
+            placeholder="Name"
             value={artist.name}
             onChange={handleChange}
-            className="border p-2 rounded w-full focus:border-blue-500 focus:ring-1"
-            required
+            className="border p-2 rounded w-full mb-2"
+          />
+          <input
+            type="text"
+            name="age"
+            placeholder="Age"
+            value={artist.age}
+            onChange={handleChange}
+            className="border p-2 rounded w-full mb-2"
+          />
+          <input
+            type="text"
+            name="gender"
+            placeholder="Gender"
+            value={artist.gender}
+            onChange={handleChange}
+            className="border p-2 rounded w-full mb-2"
           />
           <input
             type="text"
             name="industry"
-            placeholder="Industry *"
+            placeholder="Industry"
             value={artist.industry}
             onChange={handleChange}
-            className="border p-2 rounded w-full focus:border-blue-500 focus:ring-1"
-            required
+            className="border p-2 rounded w-full mb-2"
           />
           <input
-            type="email"
-            name="email"
-            placeholder="Email *"
-            value={artist.email}
+            type="text"
+            name="nationality"
+            placeholder="Nationality"
+            value={artist.nationality}
             onChange={handleChange}
-            className="border p-2 rounded w-full focus:border-blue-500 focus:ring-1"
-            required
-          />
-          <textarea
-            name="bio"
-            placeholder="Bio"
-            value={artist.bio}
-            onChange={handleChange}
-            className="border p-2 rounded w-full focus:border-blue-500 focus:ring-1"
-            rows="3"
+            className="border p-2 rounded w-full mb-2"
           />
           <button
-            type="submit"
-            disabled={loading}
-            className={`w-full p-3 rounded text-white font-medium ${
-              loading ? 'bg-gray-400' : 'bg-green-500 hover:bg-green-600'
-            }`}
+            onClick={handleAddArtist}
+            className="w-full bg-green-500 text-white p-2 rounded mb-2"
           >
-            {loading ? 'Adding Artist...' : 'Add Artist'}
+            Add Artist
           </button>
-        </form>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-            ❌ {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
-            {message}
-          </div>
-        )}
-
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Artists List</h2>
-          {artists.length > 0 ? (
-            <div className="space-y-4">
-              {artists.map((a) => (
-                <div key={a._id} className="border p-4 rounded-lg hover:shadow-md">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">{a.name}</h3>
-                      <p className="text-gray-600">Industry: {a.industry}</p>
-                      <p className="text-gray-600">Email: {a.email}</p>
-                      {a.bio && <p className="text-gray-600 mt-2">{a.bio}</p>}
-                    </div>
-                    <div className="space-x-2">
-                      <button
-                        onClick={() => handleUpdateArtist(a._id)}
-                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleRemoveArtist(a._id)}
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-500">No artists found</p>
-          )}
         </div>
+
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search Artists"
+            onChange={handleSearch}
+            className="border p-2 rounded w-full mb-2"
+          />
+        </div>
+
+        <div className="mb-4">
+          <button
+            onClick={handleExportData}
+            className="w-full bg-blue-500 text-white p-2 rounded"
+          >
+            Export Data
+          </button>
+        </div>
+
+        {message && <p className="mt-4 text-center">{message}</p>}
+
+        <ul className="list-disc list-inside mt-4">
+          {artists.map((artist, index) => (
+            <li key={index} className="mb-2">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p><strong>Name:</strong> {artist.name}</p>
+                  <p><strong>Age:</strong> {artist.age}</p>
+                  <p><strong>Gender:</strong> {artist.gender}</p>
+                  <p><strong>Industry:</strong> {artist.industry}</p>
+                  <p><strong>Nationality:</strong> {artist.nationality}</p>
+                </div>
+                <div>
+                  <button
+                    onClick={() => handleUpdateArtist(index)}
+                    className="bg-yellow-500 text-white p-1 rounded mr-2"
+                  >
+                    Update
+                  </button>
+                  <button
+                    onClick={() => handleRemoveArtist(index)}
+                    className="bg-red-500 text-white p-1 rounded"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
