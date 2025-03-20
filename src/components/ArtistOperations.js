@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ArtistOperations() {
+  const router = useRouter();
   const [artists, setArtists] = useState([]);
   const [artist, setArtist] = useState({ name: "", age: "", gender: "", industry: "", nationality: "" });
   const [message, setMessage] = useState("");
@@ -37,6 +39,10 @@ export default function ArtistOperations() {
     linkElement.setAttribute("href", dataUri);
     linkElement.setAttribute("download", exportFileDefaultName);
     linkElement.click();
+  };
+
+  const handleUpgrade = () => {
+    router.push('/subscription-plans');
   };
 
   return (
@@ -105,10 +111,24 @@ export default function ArtistOperations() {
         <div className="mb-4">
           <button
             onClick={handleExportData}
-            className="w-full bg-blue-500 text-white p-2 rounded"
+            className="w-full bg-blue-500 text-white p-2 rounded mb-2"
           >
             Export Data
           </button>
+        </div>
+
+        {/* Add Upgrade to Premium Button */}
+        <div className="mt-6 border-t pt-6">
+          <button
+            onClick={handleUpgrade}
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transform transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">⭐</span>
+            Upgrade to Premium
+          </button>
+          <p className="text-sm text-gray-500 text-center mt-2">
+            Get unlimited artists and advanced features
+          </p>
         </div>
 
         {message && <p className="mt-4 text-center">{message}</p>}

@@ -46,7 +46,7 @@ export default function Register() {
       setUsernameStatus({
         checking: false,
         available: false,
-        message: "⚠️ Username must be at least 3 characters"
+        message: "Username must be at least 3 characters"
       });
       return;
     }
@@ -54,17 +54,19 @@ export default function Register() {
     setUsernameStatus({ checking: true, available: false, message: "Checking availability..." });
     
     try {
-      const response = await checkUsernameAvailability(username);
+      const isAvailable = await checkUsernameAvailability(username);
+      console.log("Username availability for", username, ":", isAvailable);
       setUsernameStatus({
         checking: false,
-        available: response.available,
-        message: response.available ? "✅ Username is available" : "❌ Username is already taken"
+        available: isAvailable,
+        message: isAvailable ? "Username is available" : "Username is already taken"
       });
     } catch (error) {
+      console.error("Error checking username availability:", error);
       setUsernameStatus({
         checking: false,
         available: false,
-        message: "⚠️ Error checking username availability"
+        message: "Unable to verify username right now"
       });
     }
   }, 300); // Reduced debounce time to 300ms for better responsiveness
@@ -75,7 +77,7 @@ export default function Register() {
       setEmailStatus({
         checking: false,
         available: false,
-        message: "⚠️ Please enter a valid Gmail address"
+        message: "Please enter a valid Gmail address"
       });
       return;
     }
@@ -87,13 +89,13 @@ export default function Register() {
       setEmailStatus({
         checking: false,
         available: result.available,
-        message: result.message,
+        message: result.available ? "Email is available" : "Email is already registered"
       });
     } catch (error) {
       setEmailStatus({
         checking: false,
         available: false,
-        message: "⚠️ Error checking email",
+        message: "Error checking email"
       });
     }
   }, 500);
@@ -213,9 +215,10 @@ export default function Register() {
         router.push('/login');
       }, 2000);
     } catch (error) {
+      console.error("Registration failed:", error);
       setMessage({
         type: 'error',
-        text: error.message.replace(/[""{}]/g, '').replace('message:', '').trim()
+        text: error.message
       });
     }
   };
@@ -270,6 +273,16 @@ export default function Register() {
     }
     return 'An error occurred';
   };
+
+  async function handleUsernameCheck(username) {
+    try {
+        const isAvailable = await checkUsernameAvailability(username);
+        // Handle the result (e.g., update UI)
+    } catch (error) {
+        console.error('Error checking username availability:', error);
+        // Optionally, show an error message to the user
+    }
+  }
 
   return (
     <div className={`min-h-screen h-screen fixed inset-0 overflow-hidden flex ${roboto.className}`}>
@@ -406,7 +419,7 @@ export default function Register() {
                   onChange={handleChange}
                   className="w-full px-1 py-2 border-b-2 border-gray-300 focus:border-teal-500 focus:outline-none transition-colors bg-transparent placeholder-gray-400 text-gray-800"
                 />
-                {/* Show password validation message only when there's an error */}
+                {/* Show password validation error when password is less than 8 characters */}
                 {user.password && user.password.length < 8 && (
                   <div className="mt-1 text-sm text-red-500">
                     Password must be at least 8 characters long
@@ -422,25 +435,11 @@ export default function Register() {
               Sign Up
             </button>
 
-            {message && (
-              <div className={`mt-6 p-4 rounded-lg border backdrop-blur-sm animate-fadeIn ${
-                message.type === 'success' 
-                  ? 'bg-emerald-50/90 text-emerald-800 border-emerald-200' 
-                  : 'bg-red-50/90 text-red-800 border-red-200'
-              }`}>
-                <div className="flex items-center gap-3">
-                  {message.type === 'success' ? (
-                    <svg className="h-5 w-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
-                  <p className="text-sm font-medium">{message.text}</p>
-                </div>
-              </div>
+            {/* Global message block below the Sign Up button */}
+            {message && message.text !== "Password must be at least 8 characters long" && (
+              <p className={`mt-6 text-center text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'} font-medium`}>
+                {message.text}
+              </p>
             )}
 
             <div className="space-y-4 text-center">

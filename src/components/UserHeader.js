@@ -10,8 +10,25 @@ export default function UserHeader() {
   const router = useRouter();
 
   useEffect(() => {
+    // First, attempt to get a separate "username" from localStorage
     const storedUsername = localStorage.getItem("username");
-    setUsername(storedUsername || "User");
+    if (storedUsername && storedUsername.trim() !== "") {
+      setUsername(storedUsername);
+    } else {
+      // If not found, fallback to the "user" object
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUsername(userData.name || userData.username || "User");
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          setUsername("User");
+        }
+      } else {
+        setUsername("User");
+      }
+    }
   }, []);
 
   const handleLogoutClick = () => {

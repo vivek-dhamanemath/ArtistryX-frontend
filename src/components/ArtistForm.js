@@ -11,7 +11,8 @@ export default function AddArtist() {
     nationality: "",
     industry: ""
   });
-  const [message, setMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(""); // Add errorMessage state
+  const [successMessage, setSuccessMessage] = useState(""); // Add successMessage state
 
   const industries = [
     { name: "Bollywood (Hindi)", value: "Bollywood" },
@@ -28,7 +29,7 @@ export default function AddArtist() {
 
   const nationalities = [
     { name: "American 🇺🇸", value: "American" },
-    { name: "Argentinian 🇦🇷", value: "Argentinian" },
+    { name: "Argentinian 🇦�", value: "Argentinian" },
     { name: "Australian 🇦🇺", value: "Australian" },
     { name: "Austrian 🇦🇹", value: "Austrian" },
     { name: "Bangladeshi 🇧🇩", value: "Bangladeshi" },
@@ -37,7 +38,7 @@ export default function AddArtist() {
     { name: "Canadian 🇨🇦", value: "Canadian" },
     { name: "Chilean 🇨🇱", value: "Chilean" },
     { name: "Chinese 🇨🇳", value: "Chinese" },
-    { name: "Colombian 🇨🇴", value: "Colombian" },
+    { name: "Colombian 🇨�", value: "Colombian" },
     { name: "Czech 🇨🇿", value: "Czech" },
     { name: "Danish 🇩🇰", value: "Danish" },
     { name: "Dutch 🇳🇱", value: "Dutch" },
@@ -57,12 +58,12 @@ export default function AddArtist() {
     { name: "Malaysian 🇲🇾", value: "Malaysian" },
     { name: "Mexican 🇲🇽", value: "Mexican" },
     { name: "New Zealander 🇳🇿", value: "New Zealander" },
-    { name: "Nigerian 🇳🇬", value: "Nigerian" },
-    { name: "Norwegian 🇳🇴", value: "Norwegian" },
+    { name: "Nigerian 🇳�", value: "Nigerian" },
+    { name: "Norwegian 🇳�", value: "Norwegian" },
     { name: "Pakistani 🇵🇰", value: "Pakistani" },
-    { name: "Peruvian 🇵🇪", value: "Peruvian" },
+    { name: "Peruvian 🇵�", value: "Peruvian" },
     { name: "Polish 🇵🇱", value: "Polish" },
-    { name: "Portuguese 🇵🇹", value: "Portuguese" },
+    { name: "Portuguese 🇵�", value: "Portuguese" },
     { name: "Romanian 🇷🇴", value: "Romanian" },
     { name: "Russian 🇷🇺", value: "Russian" },
     { name: "Saudi Arabian 🇸🇦", value: "Saudi Arabian" },
@@ -81,42 +82,17 @@ export default function AddArtist() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Validate the data before sending
-      if (!artist.artistName || !artist.age || !artist.gender || !artist.nationality || !artist.industry) {
-        setMessage({ 
-          text: "❌ Please fill in all required fields", 
-          type: "error" 
-        });
-        return;
-      }
-
-      const artistData = {
-        artistName: artist.artistName.trim(),
-        age: parseInt(artist.age),
-        gender: artist.gender,
-        nationality: artist.nationality,
-        industry: artist.industry
-      };
-
-      console.log('Submitting artist data:', artistData); // Debug log
-
-      const response = await addArtist(artistData);
-      
-      if (response.success || response.message) {
-        setMessage({ 
-          text: `✅ ${response.message || "Artist added successfully!"}`, 
-          type: "success" 
-        });
-        clearForm();
-      } else {
-        throw new Error('Invalid response from server');
-      }
+      console.log("Submitting artist data:", artist);
+      await addArtist(artist);
+      console.log("Artist added successfully");
+      clearForm();
+      setSuccessMessage("Artist added successfully!");
+      setErrorMessage("");
+      //loadArtists(); // Ensure loadArtists is defined or remove if not needed
     } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      setMessage({ 
-        text: `❌ ${error.message || "Failed to add artist. Please check your input and try again."}`, 
-        type: "error" 
-      });
+      console.error("Error in handleSubmit:", error);
+      setErrorMessage(error.message || "An error occurred");
+      setSuccessMessage("");
     }
   };
 
@@ -129,7 +105,8 @@ export default function AddArtist() {
       nationality: "",
       industry: ""
     });
-    setMessage(null);
+    setErrorMessage("");
+    setSuccessMessage("");
   };
 
   // Add new handler for nationality
@@ -244,13 +221,14 @@ export default function AddArtist() {
         </div>
 
         {/* Message Display */}
-        {message && (
-          <div className={`mt-6 p-4 rounded-lg text-center backdrop-blur-sm animate-fadeIn
-            ${message.type === 'success' 
-              ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-              : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}
-          >
-            {message.text}
+        {errorMessage && (
+          <div className="mt-6 p-4 rounded-lg text-center backdrop-blur-sm animate-fadeIn bg-red-500/10 text-red-400 border border-red-500/20">
+            {errorMessage}
+          </div>
+        )}
+        {successMessage && (
+          <div className="mt-6 p-4 rounded-lg text-center backdrop-blur-sm animate-fadeIn bg-green-500/10 text-green-400 border border-green-500/20">
+            {successMessage}
           </div>
         )}
       </form>

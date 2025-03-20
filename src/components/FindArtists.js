@@ -45,19 +45,24 @@ export default function FindArtists() {
         case "id":
           try {
             response = await findArtistById(searchTerm);
-            if (response) {
-              // Always convert response to array for table display
-              setArtists(Array.isArray(response) ? response : [response]);
-            } else {
-              setMessage("Artist not found with this ID");
-            }
+            // If response contains an 'artist' property, extract that
+            const artistData = response && response.artist ? response.artist : response;
+            const artistsArray = Array.isArray(artistData) ? artistData : [artistData];
+            setArtists(artistsArray);
+            // Set success message as an object with type 'success'
+            setMessage({ type: 'success', text: `${artistsArray.length} artist${artistsArray.length > 1 ? "s" : ""} found` });
             return;
           } catch (error) {
             setMessage(error.message || "Artist not found");
+            setArtists([]);
             return;
           }
         case "name":
           response = await findArtistByName(searchTerm);
+          // If the response is wrapped in an object, extract the artist array
+          if (response && response.artist) {
+            response = response.artist;
+          }
           response = Array.isArray(response) ? response : [response];
           break;
         case "industry":
@@ -130,8 +135,12 @@ export default function FindArtists() {
 
               {/* Message Display */}
               {message && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-center text-sm animate-fadeIn">
-                  {message}
+                <div className={`p-3 rounded-lg text-center text-sm animate-fadeIn ${
+                  message.type === 'success'
+                    ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                    : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                }`}>
+                  {message.type ? message.text : message}
                 </div>
               )}
             </div>
@@ -151,29 +160,29 @@ export default function FindArtists() {
                       <h3 className="text-lg font-semibold text-white">Search Results</h3>
                       <p className="text-sm text-gray-400">{artists.length} artists found</p>
                     </div>
-                  </div>
-                  
-                  {/* Export Buttons */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => exportToPDF(artists)}
-                      className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-400 text-sm font-medium transition-all duration-300 hover:scale-105 flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Export PDF
-                    </button>
                     
-                    <button
-                      onClick={() => exportToExcel(artists)}
-                      className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm font-medium transition-all duration-300 hover:scale-105 flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      Export Excel
-                    </button>
+                    {/* Export Buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => exportToPDF(artists)}
+                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-400 text-sm font-medium transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export PDF
+                      </button>
+                      
+                      <button
+                        onClick={() => exportToExcel(artists)}
+                        className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm font-medium transition-all duration-300 hover:scale-105 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export Excel
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -193,28 +202,45 @@ export default function FindArtists() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {artists.map((artist, index) => (
-                      <tr 
-                        key={artist.artistId || index}
-                        className="hover:bg-white/5 transition-all duration-200 backdrop-blur-sm group"
-                      >
-                        <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">{artist.artistId}</td>
-                        {/* Simplified name cell without initial circle */}
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-300 group-hover:text-white transition-colors font-medium">
-                            {artist.artistName}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">{artist.age}</td>
-                        <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">{artist.gender}</td>
-                        <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">{artist.nationality}</td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                            {artist.industry}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {artists.map((artist, index) => {
+                      console.log("Artist object:", artist); // Debug: inspect artist object
+                      // Use fallback: if key not found then show JSON string for debugging
+                      const artistId = artist.artistId || artist.id || artist._id || JSON.stringify(artist);
+                      const name = artist.artistName || artist.name || "N/A";
+                      const age = artist.age || "-";
+                      const gender = artist.gender || "-";
+                      const nationality = artist.nationality || "-";
+                      const industry = artist.industry || "-";
+                      return (
+                        <tr 
+                          key={artistId || index}
+                          className="hover:bg-white/5 transition-all duration-200 backdrop-blur-sm group"
+                        >
+                          <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
+                            {artistId}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm text-gray-300 group-hover:text-white transition-colors font-medium">
+                              {name}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
+                            {age}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
+                            {gender}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-300 group-hover:text-white transition-colors">
+                            {nationality}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                              {industry}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

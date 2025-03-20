@@ -20,25 +20,23 @@ export default function ForgotPassword() {
   const handleSendCode = async (e) => {
     e.preventDefault();
     if (!email) {
-      setMessage("❌ Please enter your email to send reset code.");
+      setMessage("Please enter your email to send reset code.");
       return;
     }
     if (!validateEmail(email)) {
-      setMessage("❌ Invalid email format.");
+      setMessage("Invalid email format.");
       return;
     }
     setMessage("Sending code...");
     try {
       const response = await requestResetCode(email);
-      setMessage("✅ " + response.message);
+      setMessage(response.message);
       setStage(2);
     } catch (error) {
-      if (error.message.includes("Reset code already sent")) {
-        setMessage("⚠️ Reset code already sent to your email. Please check or wait 10 minutes.");
-      } else if (error.message.includes("not registered")) {
-        setMessage("❌ Your email is not registered.");
+      if (error.message.toLowerCase().includes("not registered")) {
+        setMessage("Email is not registered.");
       } else {
-        setMessage("❌ " + error.message);
+        setMessage(error.message);
       }
     }
   };
@@ -71,9 +69,18 @@ export default function ForgotPassword() {
     }
   };
 
+  // Validate Gmail address using a regex
   const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    return gmailRegex.test(email);
+  };
+
+  // Validate password is at least 8 characters long
+  const validatePassword = (password) => {
+    if (password.length < 8) {
+      return { isValid: false, error: "Password must be at least 8 characters long" };
+    }
+    return { isValid: true };
   };
 
   return (

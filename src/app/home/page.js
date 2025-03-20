@@ -36,11 +36,11 @@ export default function HomePage() {
       <UserHeader />
 
       {/* Content - Updated margin-top */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-8 max-w-7xl mx-auto">
-        <div className="w-full space-y-8 -mt-32"> {/* Changed from mt-16 to -mt-32 */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-16 max-w-7xl mx-auto">
+        <div className="w-full space-y-8 mt-8"> {/* Changed from -mt-32 to mt-8 */}
           {/* Updated Welcome Header with new gradient */}
           <div className="text-center mb-8">
-            <h1 className="text-5xl font-extrabold mb-4">
+            <h1 className="text-5xl font-extrabold mb-4 text-center">
               <span className="text-white">Welcome to </span>
               <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-transparent bg-clip-text animate-pulse">
                 ArtistryX
@@ -110,7 +110,22 @@ export default function HomePage() {
                 </div>
               </Link>
             </div>
+          </div> {/* end of feature grid */}
+          {/* Existing Premium Upgrade Button */}
+          <div className="flex justify-center mt-12">
+            <Link href="/subscription" className="relative inline-flex items-center justify-center px-6 py-3 overflow-hidden font-medium text-white transition duration-300 ease-out border-2 border-purple-400 rounded-full shadow-md group">
+              <span className="absolute inset-0 flex items-center justify-center w-full h-full bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 duration-300 transform group-hover:translate-y-full ease-out">
+                <span className="hidden group-hover:inline text-white">Go Premium</span>
+              </span>
+              <span className="relative inline-flex items-center justify-center text-white transition-colors duration-300 transform group-hover:text-white ease-out">
+                Upgrade
+              </span>
+            </Link>
           </div>
+          {/* Updated trial message block with theme-matching styling */}
+          <p className="trial-info text-center mt-2 text-sm font-medium text-gray-300 bg-gray-800/50 px-3 py-2 rounded">
+            You are under free trial and your free trial lasts 7 days. If you want to upgrade, click the upgrade button.
+          </p>
         </div>
       </div>
     </div>

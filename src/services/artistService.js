@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://artistryx-backend.onrender.com/api/artists';  // Updated URL
+const API_URL = 'http://localhost:8081/api/artists';  // Updated URL
 
 // Get Authorization headers
 const getAuthHeaders = () => {
@@ -12,33 +12,24 @@ const getAuthHeaders = () => {
 };
 
 // Add a new artist
-export const addArtist = async (artistData) => {
+export async function addArtist(artist) {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('Authentication token not found');
+    const response = await fetch(API_URL, {  // Removed extra "/artists"
+      method: "POST",
+      headers: getAuthHeaders(),  // Use authentication headers
+      body: JSON.stringify(artist),
+    });
+    const responseText = await response.text();
+    const data = responseText ? JSON.parse(responseText) : {};  // Handle empty response text
+    if (!response.ok) {
+      throw new Error(data.message || `Failed to add artist. Status: ${response.status}`);
     }
-
-    console.log('Sending artist data:', artistData); // Debug log
-    
-    const response = await axios.post(API_URL, artistData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    console.log('Response:', response.data); // Debug log
-    return response.data;
+    return data;
   } catch (error) {
-    console.error('Error details:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status
-    });
-    throw error.response?.data || { message: error.message };
+    console.error("addArtist error:", error);
+    throw error;
   }
-};
+}
 
 // Update an artist
 export const updateArtist = async (id, updatedArtist) => {
@@ -80,26 +71,44 @@ export const fetchAllArtists = async () => {
 // Find artists by industry
 export const findArtistsByIndustry = async (industry) => {
   try {
-    const response = await axios.get(`${API_URL}/industry/${industry}`, {
+    const lowerIndustry = industry.toLowerCase(); // case-insensitive search
+    const response = await axios.get(`${API_URL}/industry/${lowerIndustry}`, {
       headers: getAuthHeaders(),
+      validateStatus: () => true, // Allow all statuses for manual check
     });
-    return response.data.artist || [];
+
+    console.log("Response:", response); // Log the response
+
+    if (response.status === 200) {
+      // Ensure this matches the backend response structure
+      return response.data.data || []; // Use response.data.data to access the list of artists
+    }
+    throw new Error("No artists found for the provided industry.");
   } catch (error) {
     console.error("Find Artists By Industry Error:", error);
-    return [];
+    throw new Error(`Error finding artists by industry: ${error.message}`);
   }
 };
 
 // Find artist by ID
 export const findArtistById = async (id) => {
   try {
+    if (!id) {
+      throw new Error("Artist ID is required");
+    }
     const response = await axios.get(`${API_URL}/${id}`, {
       headers: getAuthHeaders(),
+      validateStatus: () => true, // Allow all statuses for manual check
     });
-    return response.data.artist || null;
-  } catch (error) {
+    // Allow both 2xx and 302 as success codes
+    if ((response.status >= 200 && response.status < 300) || response.status === 302) {
+      return response.data;
+    }
+    // Return a simple message when not found
+    throw new Error("Artist not found.");
+  } catch (error) { 
     console.error("Find Artist By ID Error:", error);
-    throw new Error('Artist not found');
+    throw new Error("Artist not found.");
   }
 };
 
@@ -108,10 +117,15 @@ export const findArtistByName = async (name) => {
   try {
     const response = await axios.get(`${API_URL}/name/${name}`, {
       headers: getAuthHeaders(),
+      validateStatus: () => true, // Allow all statuses for manual check
     });
-    return response.data.artist || [];
+    // Allow both success (2xx) and 302 responses as valid
+    if ((response.status >= 200 && response.status < 300) || response.status === 302) {
+      return response.data || [];
+    }
+    throw new Error("Artist not found.");
   } catch (error) {
     console.error("Find Artist By Name Error:", error);
-    return [];
+    throw new Error(`Error finding artist by name: ${error.message}`);
   }
 };

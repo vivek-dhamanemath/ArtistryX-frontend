@@ -1,4 +1,4 @@
-const AUTH_API_URL = "https://artistryx-backend.onrender.com/api/auth";
+const AUTH_API_URL = "http://localhost:8081/api/auth";
 
 // ✅ User login
 export async function loginUser(credentials) {
@@ -25,12 +25,23 @@ export async function loginUser(credentials) {
     throw new Error(errorData.error || "❌ Invalid credentials.");
   }
 
-  return JSON.parse(responseText);
+  const data = JSON.parse(responseText);
+  
+  // Store the token
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+  }
+
+  // Always redirect to home page first
+  let redirectTo = '/home'; // Changed to redirect to home page
+
+  return { ...data, redirectTo };
 }
 
 // ✅ User registration
 export async function registerUser(user) {
   try {
+    console.log("Registering user:", user);
     const response = await fetch(`${AUTH_API_URL}/register`, {
       method: "POST",
       credentials: "include",
@@ -39,33 +50,42 @@ export async function registerUser(user) {
     });
 
     const data = await response.text();
+    console.log("Register response:", response.status, data);
 
     if (!response.ok) {
+      let errorData;
       try {
-        const errorData = JSON.parse(data);
-        throw new Error(errorData.message || "Registration failed");
-      } catch {
-        throw new Error(data || "Registration failed");
+        errorData = JSON.parse(data);
+      } catch (e) {
+        console.error("Failed to parse error response:", data);
+        throw new Error(`Registration failed with status ${response.status} and body: ${data}`);
       }
+      console.error("Error data:", errorData); // Log the parsed error data
+      throw new Error(errorData.message || `Registration failed with status ${response.status}`);
     }
 
     try {
-      return JSON.parse(data);
-    } catch {
-      return { success: true, message: "Registration successful" };
+      const parsedData = JSON.parse(data);
+      console.log("Parsed registration data:", parsedData);
+      return parsedData;
+    } catch (e) {
+      console.warn("Failed to parse JSON response, returning raw text:", data);
+      return { success: true, message: "Registration successful (raw response)" };
     }
   } catch (error) {
     console.error("Registration error:", error);
-    throw new Error(error.message);
+    throw new Error(`Registration failed: ${error.message}`);
   }
 }
 
-const getAuthHeaders = () => ({
-  "Content-Type": "application/json",
-  ...(localStorage.getItem("token") && {
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-  }),
-});
+// Add a helper function to generate authorization headers if not already defined
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return {
+    Authorization: token ? `Bearer ${token}` : "",
+    "Content-Type": "application/json"
+  };
+};
 
 // ✅ Send reset code to email
 export async function requestResetCode(email) {
@@ -81,9 +101,14 @@ export async function requestResetCode(email) {
   console.log("🔹 Response Headers:", response.headers);
 
   if (!response.ok) {
-    const errorMessage = await response.text();
-    console.error("❌ Backend Error:", errorMessage || "Unknown error");
-    throw new Error(errorMessage || "Failed to send reset code.");
+    const rawError = await response.text();
+    // Clean up error message by removing curly braces, quotes, and the "error:" text
+    const cleanMessage = rawError
+      .replace(/[{}"]/g, '')
+      .replace(/error:/i, '')
+      .trim();
+    console.error("❌ Backend Error:", cleanMessage || "Unknown error");
+    throw new Error(cleanMessage || "Failed to send reset code.");
   }
 
   return response.json();
@@ -99,7 +124,7 @@ export async function verifyResetCode(email, token) {
 
   if (!response.ok) {
     const errorMessage = await response.text();
-    console.error("❌ Backend Error:", errorMessage);
+    console.error("❌ Backend Error:", errorMessage); 
     throw new Error(errorMessage || "Failed to verify reset code.");
   }
 
@@ -108,7 +133,7 @@ export async function verifyResetCode(email, token) {
 
 // ✅ Update password
 export async function updatePassword(email, newPassword) {
-  const response = await fetch(`${AUTH_API_URL}/reset-password`, {
+  const response = await fetch(`${AUTH_API_URL}/reset-password`, { // ✅ Correct endpoint
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, newPassword }),
@@ -124,73 +149,67 @@ export async function updatePassword(email, newPassword) {
 }
 
 // ✅ Live Username Availability Check
-export const checkUsernameAvailability = async (username) => {
+export async function checkUsernameAvailability(username) {
   try {
-    const response = await fetch(`${AUTH_API_URL}/check-username?username=${encodeURIComponent(username)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    const data = await response.json();
-
+    const response = await fetch(`${AUTH_API_URL}/check-username/${encodeURIComponent(username)}`);
     if (!response.ok) {
-      throw new Error(data.message || 'Error checking username');
+      const errorText = await response.text();
+      throw new Error(`Server error: ${response.status} - ${errorText}`);
     }
-
-    return {
-      available: !data.exists,
-      message: data.message || (data.available ? '✅ Username is available' : '❌ Username is taken')
-    };
+    const data = await response.json();
+    console.log("checkUsernameAvailability response data:", data);
+    // If backend returns an "exists" property true when username exists,
+    // then username is available if exists is false.
+    return data.exists === false;
   } catch (error) {
-    console.error('Username check error:', error);
-    throw new Error('Unable to check username availability');
+    console.error('Failed to fetch username availability:', error);
+    throw error;
   }
-};
+}
 
 // ✅ Live Email Availability Check
 export const checkEmailAvailability = async (email) => {
   try {
-    const response = await fetch(`${AUTH_API_URL}/check-email?email=${encodeURIComponent(email)}`, {
-      credentials: "include",
-      headers: getAuthHeaders(),
+    const url = `${AUTH_API_URL}/check-email/${encodeURIComponent(email)}`;
+    console.log("Checking email with URL:", url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      return {
-        available: false,
-        message: "Email already registered.",
-      };
+      const errorText = await response.text();
+      console.error("Error response:", response.status, response.statusText, errorText);
+      throw new Error(`Error checking email: ${response.status} - ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
     return {
-      available: true,
-      message: data.message || "Email is available",
+      available: !data.exists,
+      message: data.exists ? '❌ Email is already registered' : '✅ Email is available'
     };
   } catch (error) {
-    console.error("Email check error:", error);
+    console.error('Email check error:', error);
     return {
       available: false,
-      message: "Error checking email availability",
+      message: `⚠️ Error checking email: ${error.message}`
     };
   }
 };
 
-// ✅ Google OAuth Login
 export const googleLogin = async (credentials) => {
   try {
     console.log('Sending Google credentials to backend:', credentials);
 
     const response = await fetch(`${AUTH_API_URL}/google-login`, {
       method: 'POST',
-      credentials: "include",
+      // Removed credentials option
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        credential: credentials.credential
+        credential: credentials.credential // Send the credential from Google login
       })
     });
 
@@ -207,3 +226,5 @@ export const googleLogin = async (credentials) => {
     throw error;
   }
 };
+
+

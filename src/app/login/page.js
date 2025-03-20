@@ -1,8 +1,7 @@
 "use client";
-import { useState } from "react";
-import { loginUser } from "@/services/authService";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; 
+import Link from "next/link";
 import { Roboto } from "next/font/google";
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -11,7 +10,7 @@ const roboto = Roboto({
   subsets: ["latin"],
 });
 
-export default function LoginForm() {
+export default function LoginPage() {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
   const [message, setMessage] = useState("");
   const router = useRouter();
@@ -33,8 +32,7 @@ export default function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
-
-    // Enhanced validation checks
+  
     if (!credentials.username && !credentials.password) {
       setMessage({
         type: 'error',
@@ -44,52 +42,84 @@ export default function LoginForm() {
       });
       return;
     }
-
-    if (!credentials.username) {
-      setMessage({
-        type: 'warning',
-        title: 'Username Missing',
-        text: 'Please enter your username to continue',
-        icon: getValidationIcon('warning')
-      });
-      return;
-    }
-
-    if (!credentials.password) {
-      setMessage({
-        type: 'warning',
-        title: 'Password Required',
-        text: 'Please enter your password to proceed',
-        icon: getValidationIcon('warning')
-      });
-      return;
-    }
-
+  
     try {
-      const response = await loginUser(credentials);
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("role", response.role);
-      localStorage.setItem("username", credentials.username);
-      setMessage({
-        type: 'success',
-        title: 'Welcome Back!',
-        text: 'Login successful! Redirecting you...',
-        icon: getValidationIcon('success')
+      const endpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8081'}/api/auth/login`;
+      const payload = credentials;
+  
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-      setTimeout(() => router.push("/home"), 1000);
+  
+      const responseText = await response.text();
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseError) {
+        console.error("Failed to parse response as JSON:", parseError);
+        data = {};
+      }
+  
+      if (response.ok) {
+        setMessage({
+          type: 'success',
+          title: 'Login Successful',
+          text: 'Login Successful, redirecting...',
+          icon: getValidationIcon('success')
+        });
+  
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user || {}));
+  
+        setTimeout(() => {
+          router.push("/home");
+        }, 1000);
+      } else {
+        let errorMessage = data.message || "Login failed";
+        setMessage({
+          type: 'error',
+          title: 'Login Failed',
+          text: errorMessage,
+          icon: getValidationIcon('error')
+        });
+      }
     } catch (error) {
+      console.error("Login error:", error);
       setMessage({
         type: 'error',
         title: 'Login Failed',
-        text: error.message,
+        text: error.message || "An error occurred. Please try again.",
         icon: getValidationIcon('error')
       });
     }
   };
+  
+
+  const handleLogin = async () => {
+    const response = await fetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: credentials.username, password: credentials.password }),
+        headers: { 'Content-Type': 'application/json' },
+    });
+  
+    const data = await response.json();
+    if (response.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username);
+        router.push('/dashboard');
+    } else {
+        alert(data.message);
+    }
+  };
+  
+
+
 
   const handleGoogleLogin = async (response) => {
     console.log("Google Login Success:", response.credential);
-    
+
     if (!response.credential) {
       setMessage({
         type: 'error',
@@ -101,7 +131,8 @@ export default function LoginForm() {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_AUTH_API_URL}/google-login`, {
+      const googleLoginEndpoint = process.env.NEXT_PUBLIC_AUTH_API_URL || 'http://localhost:8081/api/auth';
+      const res = await fetch(`${googleLoginEndpoint}/google-login`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -109,7 +140,7 @@ export default function LoginForm() {
           "Accept": "application/json"
         },
         body: JSON.stringify({
-          credential: response.credential // ✅ Send the credential properly
+          credential: response.credential
         })
       });
 
@@ -121,7 +152,7 @@ export default function LoginForm() {
       }
 
       const data = JSON.parse(rawResponse);
-      
+
       if (!data.token) {
         throw new Error('Invalid authentication response');
       }
@@ -129,14 +160,14 @@ export default function LoginForm() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role || 'user');
       localStorage.setItem("username", data.name || '');
-      
+
       setMessage({
         type: 'success',
         title: 'Welcome!',
         text: 'Google login successful! Redirecting...',
         icon: getValidationIcon('success')
       });
-      
+
       setTimeout(() => router.push("/home"), 1000);
     } catch (err) {
       console.error("Google login error:", err);
@@ -169,9 +200,9 @@ export default function LoginForm() {
           <button
             onClick={renderProps.onClick}
             disabled={renderProps.disabled}
-            className="w-full py-3 px-4 rounded-lg bg-white text-gray-700 font-medium border border-gray-300 hover:bg-gray-100 transform transition-all hover:-translate-y-0.5 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center justify-center gap-2 shadow-lg"
+            className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-blue-400 text-white font-semibold shadow-md hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-transform transform hover:-translate-y-1 flex items-center justify-center gap-3"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"
@@ -189,7 +220,7 @@ export default function LoginForm() {
                 fill="#EA4335"
               />
             </svg>
-            <span className="ml-2">Sign in with Google</span>
+            <span>Log in with google</span>
           </button>
         )}
       />
@@ -202,16 +233,13 @@ export default function LoginForm() {
         html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
       `}</style>
       <div className="w-full h-full flex">
-        {/* Left Welcome Section (70%) */}
         <div className="w-[70%] h-full relative p-12 flex flex-col bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900">
-          {/* Animated background elements */} 
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
             <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
             <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
           </div>
 
-          {/* Content */}
           <div className="relative flex-grow z-10">
             <div className="glass-card p-8 rounded-2xl backdrop-blur-lg bg-white/10 border border-white/20 mb-12">
               <h2 className="text-5xl font-extrabold text-center mb-4">
@@ -226,7 +254,6 @@ export default function LoginForm() {
             </div>
 
             <div className="max-w-lg mx-auto space-y-4">
-              {/* Feature cards with glassmorphism */}
               <div className="glass-card p-4 rounded-xl backdrop-blur-md bg-white/5 border border-white/10 transform transition-all hover:scale-105 hover:bg-white/10">
                 <h3 className="text-lg font-bold text-white flex items-center gap-3">
                   <span className="text-2xl">🚀</span> Efficient Management
@@ -248,11 +275,10 @@ export default function LoginForm() {
             </div>
           </div>
 
-          {/* Developer credit */}
           <div className="relative z-10 mt-auto text-center">
             <p className="text-gray-300">
               Developed by{" "}
-              <a href="https://github.com/vivekjdm" target="_blank" rel="noopener noreferrer" 
+              <a href="https://github.com/vivekjdm" target="_blank" rel="noopener noreferrer"
                  className="font-bold text-white hover:text-blue-300 transition-colors">
                 Vivek J Dhamanemath
               </a>
@@ -260,15 +286,13 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* Login Form Section */}
         <div className="w-[30%] h-full flex items-center justify-center p-8 bg-white overflow-y-auto">
           <form onSubmit={handleSubmit} className="w-full max-w-md space-y-8">
             <div className="text-center space-y-4">
-              {/* Add Logo */}
               <div className="flex justify-center">
-                <img 
-                  src="/logo.png" 
-                  alt="ArtistryX Logo" 
+                <img
+                  src="/logo.png"
+                  alt="ArtistryX Logo"
                   className="h-12 w-auto"
                 />
               </div>
@@ -277,7 +301,7 @@ export default function LoginForm() {
 
             <div className="space-y-6">
               <div className="relative">
-                <input 
+                <input
                   type="text"
                   name="username"
                   placeholder="Username"
@@ -288,7 +312,7 @@ export default function LoginForm() {
                 />
               </div>
               <div className="relative">
-                <input 
+                <input
                   type="password"
                   name="password"
                   placeholder="Password"
@@ -298,44 +322,25 @@ export default function LoginForm() {
                   className="w-full px-1 py-2 border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none transition-colors bg-transparent placeholder-gray-400 text-gray-800"
                 />
               </div>
+              {message && (
+                <p className={`mt-2 text-center text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'} font-medium`}>
+                  {message.title}: {message.text}
+                </p>
+              )}
             </div>
 
             <div className="space-y-4">
-              <button 
+              <button
                 type="submit"
                 className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium hover:from-blue-700 hover:to-indigo-700 transform transition-all hover:-translate-y-0.5 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Sign in
+                Login
               </button>
 
-              {/* Replace the old Google button with the new GoogleLogin component */}
               <div className="w-full flex justify-center">
                 <GoogleLoginButton />
               </div>
             </div>
-            {message && (
-              <div 
-                className={`
-                  mt-6 p-4 rounded-xl font-medium
-                  transform transition-all duration-300 ease-out
-                  animate-fadeIn relative
-                  ${message.type === 'success' 
-                    ? 'bg-gradient-to-r from-green-50 to-green-100 text-green-800 border border-green-200' 
-                    : message.type === 'warning'
-                    ? 'bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-800 border border-yellow-200'
-                    : 'bg-gradient-to-r from-red-50 to-red-100 text-red-800 border border-red-200'
-                  }
-                `}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl mt-1">{message.icon}</span>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-sm mb-1">{message.title}</h3>
-                    <p className="text-sm opacity-90">{message.text}</p>
-                  </div>
-                </div>
-              </div>
-            )}
 
             <div className="space-y-4 text-center">
               <p className="text-gray-600">
@@ -352,8 +357,8 @@ export default function LoginForm() {
                   <span className="px-2 bg-white text-gray-600">Don't have an account?</span>
                 </div>
               </div>
-              <Link 
-                href="/register" 
+              <Link
+                href="/register"
                 className="block w-full bg-gray-100 text-gray-900 py-3 px-4 rounded-lg hover:bg-gray-200 transition-all transform hover:scale-105 font-medium"
               >
                 Sign Up

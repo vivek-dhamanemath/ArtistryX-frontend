@@ -1,4 +1,4 @@
-const API_AUTH_URL = "https://artistryx-backend.onrender.com/api/auth";
+const API_AUTH_URL = "http://localhost:8081/api/auth";
 
 export async function registerUser(user) {
   const response = await fetch(`${API_AUTH_URL}/register`, {
